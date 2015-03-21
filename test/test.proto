@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package test;
+
+message X {
+	string hello = 1;
+	int64 size = 2;
+}
+
+message Y {
+	repeated string em = 1;
+	string length = 2;
+}
