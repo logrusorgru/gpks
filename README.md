@@ -6,9 +6,9 @@ gpks
 [![Build Status](https://travis-ci.org/logrusorgru/gpks.svg)](https://travis-ci.org/logrusorgru/gpks)
 [![Coverage Status](https://coveralls.io/repos/logrusorgru/gpks/badge.svg?branch=master)](https://coveralls.io/r/logrusorgru/gpks?branch=master)
 
-Pure golang k-v storage with in-memory index based on protocol buffers v3
+Pure Golang k-v storage with in-memory index based on Protocol Buffers v3
 
-This project will be the alpha until you reach a stable Protocol Buffers v3.
+This project will be the alpha until the third stable version of Protocol Buffers will be released.
 Future versions of the project are likely to be incompatible with the current version.
 
 ### Install
