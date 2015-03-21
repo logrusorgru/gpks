@@ -22,7 +22,7 @@ import (
 	"reflect"
 )
 
-//
+// ErrUnregisteredType is unregistered tpe error
 var ErrUnregisteredType = errors.New("gpks.TypeReg.Get: unregistered type")
 
 // TypeRegister - type register
