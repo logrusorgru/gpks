@@ -245,3 +245,53 @@ func TestOpenSave(t *testing.T) {
 		t.Errorf("id 'two': %v != %v", d, m)
 	}
 }
+
+func TestCompact(t *testing.T) {
+	gp, err := New(path.Join("testee", "db.gpks"), path.Join("testee", "index.gpks"))
+	if err != nil {
+		t.Error(err)
+	}
+	a, b, c, d := four()
+	if err := gp.Set(0, a); err != nil {
+		t.Error(err)
+	}
+	if err := gp.Set("one", b); err != nil {
+		t.Error(err)
+	}
+	if err := gp.Set(2, c); err != nil {
+		t.Error(err)
+	}
+	if err := gp.Set("two", d); err != nil {
+		t.Error(err)
+	}
+	//
+	if err := gp.Compact(); err != nil {
+		t.Error(err)
+		return
+	}
+	//
+	if gp.Len() != 4 {
+		t.Errorf("wrong length, expected 4, got %d", gp.Len())
+	}
+	//
+	if m, err := gp.Get(0); err != nil {
+		t.Error(err)
+	} else if !cmp(a, m) {
+		t.Errorf("id 0: %v != %v", a, m)
+	}
+	if m, err := gp.Get("one"); err != nil {
+		t.Error(err)
+	} else if !cmp(b, m) {
+		t.Errorf("id 'one': %v != %v", b, m)
+	}
+	if m, err := gp.Get(2); err != nil {
+		t.Error(err)
+	} else if !cmp(c, m) {
+		t.Errorf("id 2: %v != %v", c, m)
+	}
+	if m, err := gp.Get("two"); err != nil {
+		t.Error(err)
+	} else if !cmp(d, m) {
+		t.Errorf("id 'two': %v != %v", d, m)
+	}
+}

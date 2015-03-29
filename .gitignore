@@ -25,3 +25,5 @@ _testmain.go
 
 cover.out
 cover.html
+
+*.gpks

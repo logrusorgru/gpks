@@ -18,8 +18,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"reflect"
+	"sync"
 )
 
 // ErrUnregisteredType is unregistered tpe error
@@ -55,15 +57,16 @@ type Gpks struct {
 	path  string
 	index string
 	frame int
+	mutex *sync.RWMutex
 }
 
 // New returns *Gpks or error
 func New(path, index string) (*Gpks, error) {
-	file, err := os.Create(path)
+	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return nil, err
 	}
-	inx, err := os.Create(index)
+	inx, err := os.OpenFile(index, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +77,7 @@ func New(path, index string) (*Gpks, error) {
 		file:  file,
 		path:  path,
 		index: index,
+		mutex: new(sync.RWMutex),
 	}, nil
 }
 
@@ -134,7 +138,7 @@ func (g *Gpks) fill_index(fl *os.File) error {
 
 // open existed
 func Open(path, index string) (*Gpks, error) {
-	file, err := os.OpenFile(path, os.O_RDWR, 0666)
+	file, err := os.OpenFile(path, os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +162,7 @@ func Open(path, index string) (*Gpks, error) {
 
 // Backup - create copy of index by the file path
 func (g *Gpks) Backup(index string) error {
-	fl, err := os.Create(index)
+	fl, err := os.OpenFile(index, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
@@ -538,6 +542,69 @@ func (g *Gpks) RangeI(fn func(int64, proto.Message) error) error {
 		if err := fn(id, pm); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (g *Gpks) Compact() error {
+	tb, err := ioutil.TempFile(os.TempDir(), "gpks_base")
+	if err != nil {
+		return err
+	}
+	comp := &Gpks{
+		sid:   make(map[string]int64),
+		nid:   make(map[int64]int64),
+		file:  tb,
+		path:  tb.Name(),
+		index: g.index,
+		mutex: new(sync.RWMutex),
+	}
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+	err = g.RangeI(func(k int64, v proto.Message) error {
+		return comp.Set(k, v)
+	})
+	if err != nil {
+		return err
+	}
+	err = g.RangeS(func(k string, v proto.Message) error {
+		return comp.Set(k, v)
+	})
+	if err != nil {
+		return err
+	}
+	err = g.Save()
+	if err != nil {
+		return err
+	}
+	// FATAL AREA
+	err = g.file.Close()
+	if err != nil {
+		return err
+	}
+	err = tb.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Rename(g.path, g.path+"-comp.bkp")
+	if err != nil {
+		return err
+	}
+	err = os.Rename(comp.path, g.path)
+	if err != nil {
+		return err
+	}
+	comp.path = g.path
+	comp.index = g.index
+	comp.file, err = os.OpenFile(comp.path, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	*g = *comp
+	// NOT FATAL
+	err = os.Remove(g.path + "-comp.bkp")
+	if err != nil {
+		return err
 	}
 	return nil
 }
