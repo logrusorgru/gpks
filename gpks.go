@@ -57,7 +57,7 @@ type Gpks struct {
 	path  string
 	index string
 	frame int
-	mutex *sync.RWMutex
+	mutex *sync.Mutex
 }
 
 // New returns *Gpks or error
@@ -77,7 +77,7 @@ func New(path, index string) (*Gpks, error) {
 		file:  file,
 		path:  path,
 		index: index,
-		mutex: new(sync.RWMutex),
+		mutex: new(sync.Mutex),
 	}, nil
 }
 
@@ -557,7 +557,7 @@ func (g *Gpks) Compact() error {
 		file:  tb,
 		path:  tb.Name(),
 		index: g.index,
-		mutex: new(sync.RWMutex),
+		mutex: new(sync.Mutex),
 	}
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
