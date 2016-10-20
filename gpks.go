@@ -20,6 +20,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 )
@@ -547,7 +548,7 @@ func (g *Gpks) RangeI(fn func(int64, proto.Message) error) error {
 }
 
 func (g *Gpks) Compact() error {
-	tb, err := ioutil.TempFile(os.TempDir(), "gpks_base")
+	tb, err := ioutil.TempFile(filepath.Dir(g.path), "gpks_base")
 	if err != nil {
 		return err
 	}
